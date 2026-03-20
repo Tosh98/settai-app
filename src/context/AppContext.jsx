@@ -1,10 +1,27 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { restaurants as initialRestaurants, gifts as initialGifts } from '../data/mockData';
+import { db } from '../firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  query, 
+  orderBy, 
+  getDocs,
+  setDoc,
+  increment
+} from 'firebase/firestore';
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // Simple user ID for like/bad tracking (persisted)
+  const [restaurants, setRestaurants] = useState([]);
+  const [gifts, setGifts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simple user ID for like/bad tracking (only for the current device to remember what they voted)
   const [currentUser] = useState(() => {
     const saved = localStorage.getItem('settai_user_id');
     if (saved) return saved;
@@ -13,19 +30,7 @@ export const AppProvider = ({ children }) => {
     return newId;
   });
 
-  const [restaurants, setRestaurants] = useState(() => {
-    const saved = localStorage.getItem('settai_restaurants_v4');
-    if (saved) return JSON.parse(saved);
-    return initialRestaurants;
-  });
-
-  const [gifts, setGifts] = useState(() => {
-    const saved = localStorage.getItem('settai_gifts_v4');
-    if (saved) return JSON.parse(saved);
-    return initialGifts;
-  });
-
-  // Likes tracking: { [itemId]: { type: 'like' | 'bad' } }
+  // User's own likes/bads (keep in local storage per device)
   const [userLikes, setUserLikes] = useState(() => {
     const saved = localStorage.getItem('settai_user_likes');
     if (saved) return JSON.parse(saved);
@@ -33,57 +38,89 @@ export const AppProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('settai_restaurants_v4', JSON.stringify(restaurants));
-  }, [restaurants]);
-
-  useEffect(() => {
-    localStorage.setItem('settai_gifts_v4', JSON.stringify(gifts));
-  }, [gifts]);
-
-  useEffect(() => {
     localStorage.setItem('settai_user_likes', JSON.stringify(userLikes));
   }, [userLikes]);
 
-  const addRestaurant = (restaurant) => {
+  // Initial Data Sync and Real-time Listening
+  useEffect(() => {
+    const syncData = async () => {
+      // 1. Check if we need to seed the data (only if empty)
+      const resSnapshot = await getDocs(collection(db, 'restaurants'));
+      if (resSnapshot.empty) {
+        console.log("Seeding initial restaurants data...");
+        for (const item of initialRestaurants) {
+          await setDoc(doc(db, 'restaurants', item.id), item);
+        }
+      }
+
+      const giftSnapshot = await getDocs(collection(db, 'gifts'));
+      if (giftSnapshot.empty) {
+        console.log("Seeding initial gifts data...");
+        for (const item of initialGifts) {
+          await setDoc(doc(db, 'gifts', item.id), item);
+        }
+      }
+    };
+
+    syncData().then(() => {
+      // 2. Real-time Listeners
+      const qRes = query(collection(db, 'restaurants'), orderBy('id', 'desc'));
+      const unsubRes = onSnapshot(qRes, (snapshot) => {
+        setRestaurants(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+      });
+
+      const qGifts = query(collection(db, 'gifts'), orderBy('id', 'desc'));
+      const unsubGifts = onSnapshot(qGifts, (snapshot) => {
+        setGifts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+        setLoading(false);
+      });
+
+      return () => {
+        unsubRes();
+        unsubGifts();
+      };
+    });
+  }, []);
+
+  const addRestaurant = async (restaurant) => {
+    const id = `r_${Date.now()}`;
     const newRestaurant = {
       ...restaurant,
-      id: `r_${Date.now()}`,
+      id: id,
       rating: 0,
       like_count: 0,
       bad_count: 0,
-      image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80"
+      image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80",
+      created_at: new Date()
     };
-    setRestaurants(prev => [newRestaurant, ...prev]);
+    await setDoc(doc(db, 'restaurants', id), newRestaurant);
   };
 
-  const addGift = (gift) => {
+  const addGift = async (gift) => {
+    const id = `g_${Date.now()}`;
     const newGift = {
       ...gift,
-      id: `g_${Date.now()}`,
+      id: id,
       rating: 0,
       like_count: 0,
       bad_count: 0,
-      image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80"
+      image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80",
+      created_at: new Date()
     };
-    setGifts(prev => [newGift, ...prev]);
+    await setDoc(doc(db, 'gifts', id), newGift);
   };
 
-  const toggleLike = (itemId, type) => {
-    // type: 'like' or 'bad'
+  const toggleLike = async (itemId, type) => {
     const currentVote = userLikes[itemId];
     const isRestaurant = itemId.startsWith('r');
-    const setter = isRestaurant ? setRestaurants : setGifts;
+    const collectionName = isRestaurant ? 'restaurants' : 'gifts';
+    const itemRef = doc(db, collectionName, itemId);
 
     if (currentVote?.type === type) {
-      // Remove vote (toggle off)
-      setter(prev => prev.map(item => {
-        if (item.id !== itemId) return item;
-        return {
-          ...item,
-          like_count: type === 'like' ? Math.max(0, (item.like_count || 0) - 1) : (item.like_count || 0),
-          bad_count: type === 'bad' ? Math.max(0, (item.bad_count || 0) - 1) : (item.bad_count || 0)
-        };
-      }));
+      // Remove vote
+      await updateDoc(itemRef, {
+        [type === 'like' ? 'like_count' : 'bad_count']: increment(-1)
+      });
       setUserLikes(prev => {
         const next = { ...prev };
         delete next[itemId];
@@ -91,23 +128,15 @@ export const AppProvider = ({ children }) => {
       });
     } else {
       // Add or switch vote
-      setter(prev => prev.map(item => {
-        if (item.id !== itemId) return item;
-        let newLike = item.like_count || 0;
-        let newBad = item.bad_count || 0;
-
-        // Remove old vote if switching
-        if (currentVote) {
-          if (currentVote.type === 'like') newLike = Math.max(0, newLike - 1);
-          if (currentVote.type === 'bad') newBad = Math.max(0, newBad - 1);
-        }
-
-        // Add new vote
-        if (type === 'like') newLike += 1;
-        if (type === 'bad') newBad += 1;
-
-        return { ...item, like_count: newLike, bad_count: newBad };
-      }));
+      const updates = {};
+      if (currentVote) {
+        // Remove old vote
+        updates[currentVote.type === 'like' ? 'like_count' : 'bad_count'] = increment(-1);
+      }
+      // Add new vote
+      updates[type === 'like' ? 'like_count' : 'bad_count'] = increment(1);
+      
+      await updateDoc(itemRef, updates);
       setUserLikes(prev => ({ ...prev, [itemId]: { type } }));
     }
   };
@@ -120,9 +149,11 @@ export const AppProvider = ({ children }) => {
       addGift,
       toggleLike,
       userLikes,
-      currentUser
+      currentUser,
+      loading
     }}>
       {children}
     </AppContext.Provider>
   );
 };
+
