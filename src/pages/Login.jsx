@@ -84,6 +84,23 @@ export default function Login({ onLogin }) {
             社内専用 - パスコードを入力
           </div>
 
+          <div style={{
+            fontSize: '0.85rem',
+            lineHeight: '1.6',
+            color: 'rgba(255,255,255,0.7)',
+            background: 'rgba(197, 160, 89, 0.08)',
+            padding: '1.25rem',
+            borderRadius: '10px',
+            border: '1px solid rgba(197, 160, 89, 0.2)',
+            marginBottom: '1.5rem',
+            textAlign: 'left',
+          }}>
+            <p style={{ margin: 0 }}>
+              お店選び困りますよね。過去に実際に行ってよかったところを登録してください。<br />
+              また行ってみてよかった・わるかったのリアクションもお願いします。みんなで情報共有しましょう。
+            </p>
+          </div>
+
           <div style={{ marginBottom: '1rem' }}>
             <input
               type="password"

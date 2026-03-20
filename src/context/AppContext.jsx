@@ -11,6 +11,7 @@ import {
   orderBy, 
   getDocs,
   setDoc,
+  deleteDoc,
   increment
 } from 'firebase/firestore';
 
@@ -21,7 +22,6 @@ export const AppProvider = ({ children }) => {
   const [gifts, setGifts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Simple user ID for like/bad tracking (only for the current device to remember what they voted)
   const [currentUser] = useState(() => {
     const saved = localStorage.getItem('settai_user_id');
     if (saved) return saved;
@@ -30,7 +30,6 @@ export const AppProvider = ({ children }) => {
     return newId;
   });
 
-  // User's own likes/bads (keep in local storage per device)
   const [userLikes, setUserLikes] = useState(() => {
     const saved = localStorage.getItem('settai_user_likes');
     if (saved) return JSON.parse(saved);
@@ -41,29 +40,35 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('settai_user_likes', JSON.stringify(userLikes));
   }, [userLikes]);
 
-  // Initial Data Sync and Real-time Listening
   useEffect(() => {
     const syncData = async () => {
-      // 1. Check if we need to seed the data (only if empty)
+      // 1. Check/Seed Data
       const resSnapshot = await getDocs(collection(db, 'restaurants'));
       if (resSnapshot.empty) {
-        console.log("Seeding initial restaurants data...");
         for (const item of initialRestaurants) {
           await setDoc(doc(db, 'restaurants', item.id), item);
         }
       }
 
       const giftSnapshot = await getDocs(collection(db, 'gifts'));
+      
+      // Special fix for Toraya image (g1)
+      const torayaId = "g1";
+      const correctTorayaImg = "https://images.unsplash.com/photo-1582722872445-443592859ef1?w=800&q=80";
+      
       if (giftSnapshot.empty) {
-        console.log("Seeding initial gifts data...");
         for (const item of initialGifts) {
-          await setDoc(doc(db, 'gifts', item.id), item);
+          const data = item.id === torayaId ? { ...item, image_url: correctTorayaImg } : item;
+          await setDoc(doc(db, 'gifts', item.id), data);
         }
+      } else {
+        // Force update toraya image if it exists
+        const torayaRef = doc(db, 'gifts', torayaId);
+        await updateDoc(torayaRef, { image_url: correctTorayaImg }).catch(() => {});
       }
     };
 
     syncData().then(() => {
-      // 2. Real-time Listeners
       const qRes = query(collection(db, 'restaurants'), orderBy('id', 'desc'));
       const unsubRes = onSnapshot(qRes, (snapshot) => {
         setRestaurants(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
@@ -82,32 +87,46 @@ export const AppProvider = ({ children }) => {
     });
   }, []);
 
-  const addRestaurant = async (restaurant) => {
+  const addRestaurant = async (data) => {
     const id = `r_${Date.now()}`;
-    const newRestaurant = {
-      ...restaurant,
+    await setDoc(doc(db, 'restaurants', id), {
+      ...data,
       id: id,
-      rating: 0,
+      rating: data.rating || 0,
       like_count: 0,
       bad_count: 0,
-      image_url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80",
+      image_url: data.image_url || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80",
       created_at: new Date()
-    };
-    await setDoc(doc(db, 'restaurants', id), newRestaurant);
+    });
   };
 
-  const addGift = async (gift) => {
+  const updateRestaurant = async (id, data) => {
+    await updateDoc(doc(db, 'restaurants', id), data);
+  };
+
+  const deleteRestaurant = async (id) => {
+    await deleteDoc(doc(db, 'restaurants', id));
+  };
+
+  const addGift = async (data) => {
     const id = `g_${Date.now()}`;
-    const newGift = {
-      ...gift,
+    await setDoc(doc(db, 'gifts', id), {
+      ...data,
       id: id,
-      rating: 0,
+      rating: data.rating || 0,
       like_count: 0,
       bad_count: 0,
-      image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80",
+      image_url: data.image_url || "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80",
       created_at: new Date()
-    };
-    await setDoc(doc(db, 'gifts', id), newGift);
+    });
+  };
+
+  const updateGift = async (id, data) => {
+    await updateDoc(doc(db, 'gifts', id), data);
+  };
+
+  const deleteGift = async (id) => {
+    await deleteDoc(doc(db, 'gifts', id));
   };
 
   const toggleLike = async (itemId, type) => {
@@ -117,25 +136,18 @@ export const AppProvider = ({ children }) => {
     const itemRef = doc(db, collectionName, itemId);
 
     if (currentVote?.type === type) {
-      // Remove vote
-      await updateDoc(itemRef, {
-        [type === 'like' ? 'like_count' : 'bad_count']: increment(-1)
-      });
+      await updateDoc(itemRef, { [type === 'like' ? 'like_count' : 'bad_count']: increment(-1) });
       setUserLikes(prev => {
         const next = { ...prev };
         delete next[itemId];
         return next;
       });
     } else {
-      // Add or switch vote
       const updates = {};
       if (currentVote) {
-        // Remove old vote
         updates[currentVote.type === 'like' ? 'like_count' : 'bad_count'] = increment(-1);
       }
-      // Add new vote
       updates[type === 'like' ? 'like_count' : 'bad_count'] = increment(1);
-      
       await updateDoc(itemRef, updates);
       setUserLikes(prev => ({ ...prev, [itemId]: { type } }));
     }
@@ -143,17 +155,12 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      restaurants,
-      gifts,
-      addRestaurant,
-      addGift,
-      toggleLike,
-      userLikes,
-      currentUser,
-      loading
+      restaurants, gifts, addRestaurant, updateRestaurant, deleteRestaurant, 
+      addGift, updateGift, deleteGift, toggleLike, userLikes, currentUser, loading
     }}>
       {children}
     </AppContext.Provider>
   );
 };
+
 

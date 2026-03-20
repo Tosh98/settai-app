@@ -2,10 +2,10 @@ import React, { useState, useMemo, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { filterOptions } from '../data/mockData';
 import { AppContext } from '../context/AppContext';
-import { Coins, Clock, MapPin, Search, ShieldAlert, SlidersHorizontal, X, Plus, ThumbsUp, ThumbsDown, Award, AlertTriangle } from 'lucide-react';
+import { Coins, Clock, Search, ShieldAlert, SlidersHorizontal, X, Plus, ThumbsUp, ThumbsDown, Award, AlertTriangle, Trash2, Edit3 } from 'lucide-react';
 
 export default function GiftsList() {
-  const { gifts, toggleLike, userLikes } = useContext(AppContext);
+  const { gifts, toggleLike, userLikes, deleteGift } = useContext(AppContext);
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -66,11 +66,24 @@ export default function GiftsList() {
     toggleLike(id, type);
   };
 
+  const handleDelete = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm('削除すると元に戻せませんが、よろしいですか？')) {
+      deleteGift(id);
+    }
+  };
+
+  const handleEdit = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/register?type=gift&id=${id}`);
+  };
+
   return (
     <div>
       <h1 className="page-title">手土産を探す</h1>
 
-      {/* Sticky Search Bar */}
       <div className="search-bar-sticky">
         <div className="search-input-wrap">
           <Search size={18} />
@@ -93,7 +106,6 @@ export default function GiftsList() {
         </button>
       </div>
 
-      {/* Sort Chips */}
       <div className="sort-chips">
         {[
           { key: 'recommended', label: 'おすすめ順' },
@@ -111,12 +123,10 @@ export default function GiftsList() {
         ))}
       </div>
 
-      {/* Results Count */}
       <div className="results-count mb-2">
         {filteredGifts.length}件の手土産
       </div>
 
-      {/* Card Grid */}
       <div className="card-grid">
         {filteredGifts.map(g => {
           const recommended = isRecommended(g);
@@ -132,6 +142,14 @@ export default function GiftsList() {
             >
               <div className="card-image-wrap">
                 <img src={g.image_url} alt={g.name} className="card-image" loading="lazy" />
+                <div style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', gap: '4px' }}>
+                   <button className="action-icon-btn" onClick={(e) => handleEdit(e, g.id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '4px', padding: '4px', color: 'white', display: 'flex' }}>
+                    <Edit3 size={14} />
+                  </button>
+                  <button className="action-icon-btn" onClick={(e) => handleDelete(e, g.id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '4px', padding: '4px', color: '#ff6b6b', display: 'flex' }}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
                 {g.ng_flag && (
                   <div style={{ position: 'absolute', top: '6px', left: '6px' }} className="badge ng-badge">
                     <ShieldAlert size={10} /> NG
@@ -163,6 +181,11 @@ export default function GiftsList() {
                     <Clock size={12} color="var(--accent-gold)" />
                     <span>{g.expiry}</span>
                   </div>
+                  {g.registrant && (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      登録者: {g.registrant}
+                    </div>
+                  )}
                 </div>
                 <div className="card-reactions">
                   <button
@@ -184,12 +207,10 @@ export default function GiftsList() {
         })}
       </div>
 
-      {/* FAB */}
       <button className="fab" onClick={() => navigate('/register')}>
         <Plus size={28} strokeWidth={2.5} />
       </button>
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <>
           <div className="filter-modal-backdrop" onClick={() => setShowFilterModal(false)} />

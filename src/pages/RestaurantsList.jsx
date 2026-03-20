@@ -2,10 +2,10 @@ import React, { useState, useMemo, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { filterOptions } from '../data/mockData';
 import { AppContext } from '../context/AppContext';
-import { MapPin, Users, Coins, Search, ShieldAlert, SlidersHorizontal, X, Plus, DoorOpen, ThumbsUp, ThumbsDown, Award, AlertTriangle } from 'lucide-react';
+import { Users, Search, ShieldAlert, SlidersHorizontal, X, Plus, DoorOpen, ThumbsUp, ThumbsDown, Award, AlertTriangle, Trash2, Edit3 } from 'lucide-react';
 
 export default function RestaurantsList() {
-  const { restaurants, toggleLike, userLikes } = useContext(AppContext);
+  const { restaurants, toggleLike, userLikes, deleteRestaurant } = useContext(AppContext);
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -37,7 +37,6 @@ export default function RestaurantsList() {
   const filteredRestaurants = useMemo(() => {
     let result = [...restaurants];
 
-    // Text search
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
       result = result.filter(r =>
@@ -88,11 +87,24 @@ export default function RestaurantsList() {
     toggleLike(id, type);
   };
 
+  const handleDelete = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm('削除すると元に戻せませんが、よろしいですか？')) {
+      deleteRestaurant(id);
+    }
+  };
+
+  const handleEdit = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/register?type=restaurant&id=${id}`);
+  };
+
   return (
     <div>
       <h1 className="page-title">店舗を探す</h1>
 
-      {/* Sticky Search Bar */}
       <div className="search-bar-sticky">
         <div className="search-input-wrap">
           <Search size={18} />
@@ -115,7 +127,6 @@ export default function RestaurantsList() {
         </button>
       </div>
 
-      {/* Sort Chips */}
       <div className="sort-chips">
         {[
           { key: 'recommended', label: 'おすすめ順' },
@@ -134,12 +145,10 @@ export default function RestaurantsList() {
         ))}
       </div>
 
-      {/* Results Count */}
       <div className="results-count mb-2">
         {filteredRestaurants.length}件の店舗
       </div>
 
-      {/* Card Grid */}
       <div className="card-grid">
         {filteredRestaurants.map(r => {
           const recommended = isRecommended(r);
@@ -155,6 +164,14 @@ export default function RestaurantsList() {
             >
               <div className="card-image-wrap">
                 <img src={r.image_url} alt={r.name} className="card-image" loading="lazy" />
+                <div style={{ position: 'absolute', top: '6px', right: '6px', display: 'flex', gap: '4px' }}>
+                  <button className="action-icon-btn" onClick={(e) => handleEdit(e, r.id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '4px', padding: '4px', color: 'white', display: 'flex' }}>
+                    <Edit3 size={14} />
+                  </button>
+                  <button className="action-icon-btn" onClick={(e) => handleDelete(e, r.id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '4px', padding: '4px', color: '#ff6b6b', display: 'flex' }}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
                 {r.ng_flag && (
                   <div style={{ position: 'absolute', top: '6px', left: '6px' }} className="badge ng-badge">
                     <ShieldAlert size={10} /> NG
@@ -187,6 +204,11 @@ export default function RestaurantsList() {
                     <Users size={12} color="var(--accent-gold)" />
                     <span>{r.role_level}</span>
                   </div>
+                  {r.registrant && (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                      登録者: {r.registrant}
+                    </div>
+                  )}
                 </div>
                 <div className="card-reactions">
                   <button
@@ -208,12 +230,10 @@ export default function RestaurantsList() {
         })}
       </div>
 
-      {/* FAB */}
       <button className="fab" onClick={() => navigate('/register')}>
         <Plus size={28} strokeWidth={2.5} />
       </button>
 
-      {/* Filter Modal */}
       {showFilterModal && (
         <>
           <div className="filter-modal-backdrop" onClick={() => setShowFilterModal(false)} />
