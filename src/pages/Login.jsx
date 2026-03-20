@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, LogIn, AlertCircle } from 'lucide-react';
 
-const PASSCODE = 'system';
+const PASSCODE = 'pasco';
 
 export default function Login({ onLogin }) {
   const [code, setCode] = useState('');

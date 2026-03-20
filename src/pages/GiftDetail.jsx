@@ -1,10 +1,11 @@
 import React, { useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { ExternalLink, ArrowLeft, ShieldAlert, User, ThumbsUp, ThumbsDown, Award, AlertTriangle } from 'lucide-react';
+import { ExternalLink, ArrowLeft, ShieldAlert, User, ThumbsUp, ThumbsDown, Award, AlertTriangle, Edit3 } from 'lucide-react';
 
 export default function GiftDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { gifts, toggleLike, userLikes } = useContext(AppContext);
   const gift = gifts.find(g => g.id === id);
 
@@ -43,24 +44,28 @@ export default function GiftDetail() {
           )}
 
           <div className="detail-header">
-            <div className="card-tags mb-2">
-              {gift.brand && <span className="badge">{gift.brand}</span>}
-              <span className="badge boolean-badge true">{gift.scene}</span>
-              {isRecommended && (
-                <span className="badge recommend-badge">
-                  <Award size={10} /> おすすめ
-                </span>
-              )}
-              {isCaution && (
-                <span className="badge caution-badge">
-                  <AlertTriangle size={10} /> 注意
-                </span>
-              )}
-              {gift.registrant && (
-                <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: 'none' }}>
-                  <User size={10} /> {gift.registrant}
-                </span>
-              )}
+            <div className="flex justify-between items-start mb-2">
+              <div className="card-tags">
+                {gift.brand && <span className="badge">{gift.brand}</span>}
+                <span className="badge boolean-badge true">{gift.scene}</span>
+                {isRecommended && (
+                  <span className="badge recommend-badge">
+                    <Award size={10} /> おすすめ
+                  </span>
+                )}
+                {isCaution && (
+                  <span className="badge caution-badge">
+                    <AlertTriangle size={10} /> 注意
+                  </span>
+                )}
+              </div>
+              <button 
+                className="btn-ghost flex items-center gap-1" 
+                onClick={() => navigate(`/register?type=gift&id=${gift.id}`)}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <Edit3 size={14} /> 編集
+              </button>
             </div>
 
             <h1 className="detail-title">{gift.name}</h1>

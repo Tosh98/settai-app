@@ -295,6 +295,18 @@ export default function Registration() {
                     {filterOptions.quietLevels.filter(q => q !== 'すべて').map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
+                <div className="filter-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="filter-label">画像URL (空欄ならデフォルト)</label>
+                  <input type="url" className="text-input" value={rForm.image_url || ''} onChange={e => setRForm({...rForm, image_url: e.target.value})} placeholder="https://..." />
+                  <div style={{ marginTop: '0.5rem', borderRadius: '4px', overflow: 'hidden', height: '100px', width: '100%', border: '1px solid rgba(255,255,255,0.06)', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img 
+                      src={rForm.image_url || "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80"} 
+                      alt="Preview" 
+                      style={{ height: '100%', width: '100%', objectFit: 'cover' }}
+                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80"; }}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="detail-grid mt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
@@ -363,6 +375,18 @@ export default function Registration() {
                 <div className="filter-group">
                   <label className="filter-label">購入場所</label>
                   <input type="text" className="text-input" value={gForm.buy_place} onChange={e => setGForm({...gForm, buy_place: e.target.value})} />
+                </div>
+                <div className="filter-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="filter-label">画像URL (空欄ならデフォルト)</label>
+                  <input type="url" className="text-input" value={gForm.image_url || ''} onChange={e => setGForm({...gForm, image_url: e.target.value})} placeholder="https://..." />
+                  <div style={{ marginTop: '0.5rem', borderRadius: '4px', overflow: 'hidden', height: '100px', width: '100%', border: '1px solid rgba(255,255,255,0.06)', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img 
+                      src={gForm.image_url || "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80"} 
+                      alt="Preview" 
+                      style={{ height: '100%', width: '100%', objectFit: 'cover' }}
+                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80"; }}
+                    />
+                  </div>
                 </div>
               </div>
 

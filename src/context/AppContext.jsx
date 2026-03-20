@@ -52,19 +52,29 @@ export const AppProvider = ({ children }) => {
 
       const giftSnapshot = await getDocs(collection(db, 'gifts'));
       
-      // Special fix for Toraya image (g1)
-      const torayaId = "g1";
-      const correctTorayaImg = "https://images.unsplash.com/photo-1582722872445-443592859ef1?w=800&q=80";
-      
       if (giftSnapshot.empty) {
         for (const item of initialGifts) {
-          const data = item.id === torayaId ? { ...item, image_url: correctTorayaImg } : item;
-          await setDoc(doc(db, 'gifts', item.id), data);
+          await setDoc(doc(db, 'gifts', item.id), item);
         }
       } else {
-        // Force update toraya image if it exists
-        const torayaRef = doc(db, 'gifts', torayaId);
-        await updateDoc(torayaRef, { image_url: correctTorayaImg }).catch(() => {});
+        // Ensure system items have the latest images from mockData
+        for (const item of initialGifts) {
+          if (item.registrant === "システム") {
+            const itemRef = doc(db, 'gifts', item.id);
+            await updateDoc(itemRef, { image_url: item.image_url }).catch(() => {});
+          }
+        }
+      }
+
+      // Also ensure restaurants stay updated if they are system entries
+      const resSnapshotAfter = await getDocs(collection(db, 'restaurants'));
+      if (!resSnapshotAfter.empty) {
+        for (const item of initialRestaurants) {
+          if (item.registrant === "システム") {
+            const itemRef = doc(db, 'restaurants', item.id);
+            await updateDoc(itemRef, { image_url: item.image_url }).catch(() => {});
+          }
+        }
       }
     };
 

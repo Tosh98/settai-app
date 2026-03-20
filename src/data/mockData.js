@@ -85,7 +85,7 @@ export const gifts = [
     bad_count: 0,
     memo: "定番の安心感。日持ちが長いため、相手の負担になりにくい。",
     ng_flag: false,
-    image_url: "https://images.unsplash.com/photo-1499195880457-3a1ab9bc05db?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1582722872445-44c507a3c8dd?w=800&q=80",
     registrant: "システム"
   },
   {
@@ -119,7 +119,7 @@ export const gifts = [
     bad_count: 5,
     memo: "接待の手土産としては不適切との指摘あり。",
     ng_flag: true,
-    image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800&q=80",
     registrant: "システム"
   }
 ];

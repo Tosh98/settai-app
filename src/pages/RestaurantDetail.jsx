@@ -1,10 +1,11 @@
 import React, { useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { MapPin, Phone, ExternalLink, ArrowLeft, ShieldAlert, User, Wine, ThumbsUp, ThumbsDown, Award, AlertTriangle, DoorOpen } from 'lucide-react';
+import { MapPin, Phone, ExternalLink, ArrowLeft, ShieldAlert, User, Wine, ThumbsUp, ThumbsDown, Award, AlertTriangle, DoorOpen, Edit3 } from 'lucide-react';
 
 export default function RestaurantDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { restaurants, toggleLike, userLikes } = useContext(AppContext);
   const restaurant = restaurants.find(r => r.id === id);
 
@@ -43,31 +44,35 @@ export default function RestaurantDetail() {
           )}
 
           <div className="detail-header">
-            <div className="card-tags mb-2">
-              <span className="badge">{restaurant.category}</span>
-              <span className={`badge boolean-badge ${restaurant.private_room ? 'true' : ''}`}>
-                <DoorOpen size={10} /> {restaurant.private_room ? '個室あり' : '個室なし'}
-              </span>
-              {restaurant.all_you_can_drink && (
-                <span className="badge" style={{ backgroundColor: 'var(--accent-gold-bg)', color: 'var(--accent-gold)', border: '1px solid var(--accent-gold-border)' }}>
-                  飲み放題
+            <div className="flex justify-between items-start mb-2">
+              <div className="card-tags">
+                <span className="badge">{restaurant.category}</span>
+                <span className={`badge boolean-badge ${restaurant.private_room ? 'true' : ''}`}>
+                  <DoorOpen size={10} /> {restaurant.private_room ? '個室あり' : '個室なし'}
                 </span>
-              )}
-              {isRecommended && (
-                <span className="badge recommend-badge">
-                  <Award size={10} /> おすすめ
-                </span>
-              )}
-              {isCaution && (
-                <span className="badge caution-badge">
-                  <AlertTriangle size={10} /> 注意
-                </span>
-              )}
-              {restaurant.registrant && (
-                <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', border: 'none' }}>
-                  <User size={10} /> {restaurant.registrant}
-                </span>
-              )}
+                {restaurant.all_you_can_drink && (
+                  <span className="badge" style={{ backgroundColor: 'var(--accent-gold-bg)', color: 'var(--accent-gold)', border: '1px solid var(--accent-gold-border)' }}>
+                    飲み放題
+                  </span>
+                )}
+                {isRecommended && (
+                  <span className="badge recommend-badge">
+                    <Award size={10} /> おすすめ
+                  </span>
+                )}
+                {isCaution && (
+                  <span className="badge caution-badge">
+                    <AlertTriangle size={10} /> 注意
+                  </span>
+                )}
+              </div>
+              <button 
+                className="btn-ghost flex items-center gap-1" 
+                onClick={() => navigate(`/register?type=restaurant&id=${restaurant.id}`)}
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <Edit3 size={14} /> 編集
+              </button>
             </div>
 
             <h1 className="detail-title">{restaurant.name}</h1>
