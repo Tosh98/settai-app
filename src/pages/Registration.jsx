@@ -26,6 +26,7 @@ export default function Registration() {
     price_range: filterOptions.priceRanges[0],
     private_room: false,
     all_you_can_drink: false,
+    smoking_allowed: false,
     alcohol_types: [],
     role_level: filterOptions.roleLevels[0],
     quiet_level: filterOptions.quietLevels[0],
@@ -312,6 +313,7 @@ export default function Registration() {
               <div className="detail-grid mt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
                 <label className="filter-label flex items-center gap-2"><input type="checkbox" checked={rForm.private_room} onChange={e => setRForm({...rForm, private_room: e.target.checked})} /> 個室あり</label>
                 <label className="filter-label flex items-center gap-2"><input type="checkbox" checked={rForm.all_you_can_drink} onChange={e => setRForm({...rForm, all_you_can_drink: e.target.checked})} /> 飲み放題あり</label>
+                <label className="filter-label flex items-center gap-2"><input type="checkbox" checked={rForm.smoking_allowed} onChange={e => setRForm({...rForm, smoking_allowed: e.target.checked})} /> 喫煙可</label>
               </div>
 
               <div className="filter-group mt-6">

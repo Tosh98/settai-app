@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { MapPin, Phone, ExternalLink, ArrowLeft, ShieldAlert, User, Wine, ThumbsUp, ThumbsDown, Award, AlertTriangle, DoorOpen, Edit3 } from 'lucide-react';
+import { MapPin, Phone, ExternalLink, ArrowLeft, ShieldAlert, User, Wine, ThumbsUp, ThumbsDown, Award, AlertTriangle, DoorOpen, Edit3, Flame } from 'lucide-react';
 
 export default function RestaurantDetail() {
   const { id } = useParams();
@@ -50,6 +50,11 @@ export default function RestaurantDetail() {
                 <span className={`badge boolean-badge ${restaurant.private_room ? 'true' : ''}`}>
                   <DoorOpen size={10} /> {restaurant.private_room ? '個室あり' : '個室なし'}
                 </span>
+                {restaurant.smoking_allowed && (
+                  <span className="badge boolean-badge true" style={{ backgroundColor: '#fdf2f2', color: '#e05a5a', border: '1px solid #f9d6d6' }}>
+                    <Flame size={10} /> 喫煙可
+                  </span>
+                )}
                 {restaurant.all_you_can_drink && (
                   <span className="badge" style={{ backgroundColor: 'var(--accent-gold-bg)', color: 'var(--accent-gold)', border: '1px solid var(--accent-gold-border)' }}>
                     飲み放題

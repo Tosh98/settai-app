@@ -2,7 +2,7 @@ import React, { useState, useMemo, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { filterOptions } from '../data/mockData';
 import { AppContext } from '../context/AppContext';
-import { Users, Search, ShieldAlert, SlidersHorizontal, X, Plus, DoorOpen, ThumbsUp, ThumbsDown, Award, AlertTriangle, Trash2, Edit3 } from 'lucide-react';
+import { Users, Search, ShieldAlert, SlidersHorizontal, X, Plus, DoorOpen, ThumbsUp, ThumbsDown, Award, AlertTriangle, Trash2, Edit3, Flame } from 'lucide-react';
 
 export default function RestaurantsList() {
   const { restaurants, toggleLike, userLikes, deleteRestaurant } = useContext(AppContext);
@@ -13,6 +13,7 @@ export default function RestaurantsList() {
     area: 'すべて',
     roleLevel: 'すべて',
     privateRoom: 'すべて',
+    smokingAllowed: 'すべて',
     priceRange: 'すべて',
     quietLevel: 'すべて'
   });
@@ -29,6 +30,7 @@ export default function RestaurantsList() {
       area: 'すべて',
       roleLevel: 'すべて',
       privateRoom: 'すべて',
+      smokingAllowed: 'すべて',
       priceRange: 'すべて',
       quietLevel: 'すべて'
     });
@@ -55,6 +57,10 @@ export default function RestaurantsList() {
     if (filters.privateRoom !== 'すべて') {
       const isReqPrivate = filters.privateRoom === 'あり';
       result = result.filter(r => r.private_room === isReqPrivate);
+    }
+    if (filters.smokingAllowed !== 'すべて') {
+      const isReqSmoking = filters.smokingAllowed === 'あり';
+      result = result.filter(r => r.smoking_allowed === isReqSmoking);
     }
     if (filters.priceRange !== 'すべて') {
       result = result.filter(r => r.price_range === filters.priceRange);
@@ -198,6 +204,11 @@ export default function RestaurantsList() {
                       <DoorOpen size={10} /> 個室
                     </span>
                   )}
+                  {r.smoking_allowed && (
+                    <span className="badge boolean-badge true" style={{ backgroundColor: '#fdf2f2', color: '#e05a5a', border: '1px solid #f9d6d6' }}>
+                      <Flame size={10} /> 喫煙可
+                    </span>
+                  )}
                 </div>
                 <div className="card-info">
                   <div className="info-row">
@@ -261,6 +272,14 @@ export default function RestaurantsList() {
               <div className="filter-group">
                 <label className="filter-label">個室</label>
                 <select className="select-input" value={filters.privateRoom} onChange={e => handleFilterChange('privateRoom', e.target.value)}>
+                  <option value="すべて">すべて</option>
+                  <option value="あり">あり</option>
+                  <option value="なし">なし</option>
+                </select>
+              </div>
+              <div className="filter-group">
+                <label className="filter-label">喫煙可</label>
+                <select className="select-input" value={filters.smokingAllowed} onChange={e => handleFilterChange('smokingAllowed', e.target.value)}>
                   <option value="すべて">すべて</option>
                   <option value="あり">あり</option>
                   <option value="なし">なし</option>
